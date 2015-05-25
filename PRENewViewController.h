@@ -7,10 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <CoreLocation/CoreLocation.h>
 #import "PREDetailViewController.h"
+#import "PREConvert.h"
 #import "Run.h"
+#import "Location.h"
 
-@interface PRENewViewController : UIViewController <UIActionSheetDelegate>
+@interface PRENewViewController : UIViewController <UIActionSheetDelegate, CLLocationManagerDelegate>
 
 @property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 
@@ -26,6 +29,13 @@
 //button references
 @property (nonatomic, weak) IBOutlet UIButton *startBtn;
 @property (nonatomic, weak) IBOutlet UIButton *stopBtn;
+
+
+@property int secs;
+@property float dist;
+@property (nonatomic, strong) CLLocationManager *loc;
+@property (nonatomic, strong) NSMutableArray *savedLoc;
+@property (nonatomic, strong) NSTimer *timer;
 
 //button action
 -(IBAction)startAction:(id)sender;

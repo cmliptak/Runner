@@ -13,13 +13,10 @@
 
 @interface PREDetailViewController : UIViewController <MKMapViewDelegate>
 
-/*@property (strong, nonatomic) id detailItem;
-
-@property (weak, nonatomic) IBOutlet UILabel *detailDescriptionLabel;*/
 
 @property (strong, nonatomic) Run *run;
 
-
+//label references
 @property (nonatomic, weak) IBOutlet MKMapView *mapView;
 @property (nonatomic, weak) IBOutlet UILabel *finalDistLD;
 @property (nonatomic, weak) IBOutlet UILabel *dateLD;

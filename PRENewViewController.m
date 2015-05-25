@@ -7,13 +7,11 @@
 //
 
 #import "PRENewViewController.h"
-#import "PREDetailViewController.h"
-#import "Run.h"
 
 //variables
 static NSString * const segueDetails = @"RDetails";
 
-@interface PRENewViewController () <UIActionSheetDelegate>
+@interface PRENewViewController ()
 
 @end
 
@@ -40,16 +38,11 @@ static NSString * const segueDetails = @"RDetails";
     // Dispose of any resources that can be recreated.
 }
 
-/*
+
 #pragma mark - Navigation
 
 // In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
-{
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
+
 
 //****************************************************************************************************
 //Only show the prompt label and start button; notify view controller of what will appear
@@ -57,6 +50,7 @@ static NSString * const segueDetails = @"RDetails";
 - (void)viewWillAppear:(BOOL)animated{
     
     [super viewWillAppear:animated];
+    [self.timer invalidate]; //stop updating
     
     //hide
     self.timeL.text = @"";
@@ -86,6 +80,14 @@ static NSString * const segueDetails = @"RDetails";
     self.distL.hidden = NO;
     self.speedL.hidden = NO;
     self.stopBtn.hidden = NO;
+    
+    //begin run; resets fields
+    self.secs = 0;
+    self.dist = 0;
+    self.savedLoc = [NSMutableArray array];
+    self.timer = [NSTimer scheduledTimerWithTimeInterval:(1.0) target:self
+                                                selector:@selector(updateLabels) userInfo:nil repeats:YES];
+    [self updateLocation];
 }
 //****************************************************************************************************
 //  Action handler for stop button; propmpt for the action dialog
@@ -106,6 +108,7 @@ static NSString * const segueDetails = @"RDetails";
     
     // if(save);
     if (buttonIndex == 0) {
+        [self saveRun];
         [self performSegueWithIdentifier:segueDetails sender:nil];
         
     }//end if save
@@ -121,6 +124,101 @@ static NSString * const segueDetails = @"RDetails";
 //****************************************************************************************************
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+    
     [[segue destinationViewController] setRun:self.run];
+}
+//***********************************************************************************************************************
+//  pass current values to the methods of PREConvert to pull the strings and assign them to propper labels;
+//  every time this method is called the labels are updated
+//***********************************************************************************************************************
+- (void)updateLabels
+{
+    self.secs++;
+    
+    self.timeL.text = [NSString stringWithFormat:@"Time: %@",  [PREConvert secSg:self.secs usingLongFormat:NO]];
+    self.distL.text = [NSString stringWithFormat:@"Distance: %@", [PREConvert distSg:self.dist]];
+    self.speedL.text = [NSString stringWithFormat:@"Speed: %@",  [PREConvert spdSg:self.dist period:self.secs]];
+}
+//***********************************************************************************************************************
+//
+//  Update the location
+//***********************************************************************************************************************
+- (void)updateLocation
+{
+    // Create the location manager
+    if (self.loc == nil) {
+        self.loc = [[CLLocationManager alloc] init];
+    }
+    
+    self.loc.delegate = self;// sets the delegate to this class; it tells where to send location updates
+    self.loc.desiredAccuracy = kCLLocationAccuracyBest;
+    self.loc.activityType = CLActivityTypeFitness;
+    
+    // Movement threshold for new events.
+    self.loc.distanceFilter = 10; // meters
+    
+    //tell manager to get updates on the location
+    [self.loc startUpdatingLocation];
+}
+//***********************************************************************************************************************
+//  This gets the updates from the Location Manager
+//  method is called whenever there are new updates that can be given
+//  Obtain the latitude, longitude, altitude, and timestamp from CLLocation
+//***********************************************************************************************************************
+
+- (void)loc:(CLLocationManager *)manager
+     didUpdateLocations:(NSArray *)savedLoc
+{
+    for (CLLocation *newLocation in savedLoc) {
+        if (newLocation.horizontalAccuracy < 20) {
+            
+            // update distance
+            if (self.savedLoc.count > 0) {
+                self.dist += [newLocation distanceFromLocation:self.savedLoc.lastObject];
+            }
+            
+            [self.savedLoc addObject:newLocation];
+        }
+    }
+}
+//***********************************************************************************************************************
+//  Each run is saved separately
+//  Stop reading locations and save
+//***********************************************************************************************************************
+
+- (void)saveRun
+{
+    //create a Run object
+    Run *newRun = [NSEntityDescription insertNewObjectForEntityForName:@"Run"
+                                                inManagedObjectContext:self.managedObjectContext];
+    
+    newRun.path = [NSNumber numberWithFloat:self.dist];
+    newRun.duration = [NSNumber numberWithInt:self.secs];
+    newRun.time = [NSDate date];
+    
+    NSMutableArray *locationArray = [NSMutableArray array];
+    for (CLLocation *loc in self.savedLoc) {
+        //create Location object
+        Location *locObject = [NSEntityDescription insertNewObjectForEntityForName:@"Location"
+                                                                 inManagedObjectContext:self.managedObjectContext];
+        
+        locObject.time = loc.timestamp;
+        locObject.lati = [NSNumber numberWithDouble:loc.coordinate.latitude];
+        locObject.longi = [NSNumber numberWithDouble:loc.coordinate.longitude];
+        
+        [locationArray addObject:locObject];
+    }
+    
+    newRun.locations = [NSOrderedSet orderedSetWithArray:locationArray];
+    self.run = newRun;
+    
+    // Save the context.
+    NSError *error = nil;
+    if (![self.managedObjectContext save:&error]) {
+        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+        abort();
+    }
 }
 @end
