@@ -7,7 +7,7 @@
 //
 
 #import "PRENewViewController.h"
-
+#import <CoreLocation/CoreLocation.h>
 //variables
 static NSString * const segueDetails = @"RDetails";
 
@@ -88,6 +88,7 @@ static NSString * const segueDetails = @"RDetails";
     self.timer = [NSTimer scheduledTimerWithTimeInterval:(1.0) target:self
                                                 selector:@selector(updateLabels) userInfo:nil repeats:YES];
     [self updateLocation];
+
 }
 //****************************************************************************************************
 //  Action handler for stop button; propmpt for the action dialog
@@ -168,7 +169,7 @@ static NSString * const segueDetails = @"RDetails";
 //  Obtain the latitude, longitude, altitude, and timestamp from CLLocation
 //***********************************************************************************************************************
 
-- (void)loc:(CLLocationManager *)manager
+- (void)locationManager:(CLLocationManager *)manager
      didUpdateLocations:(NSArray *)savedLoc
 {
     for (CLLocation *newLocation in savedLoc) {
