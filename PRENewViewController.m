@@ -8,6 +8,8 @@
 
 #import "PRENewViewController.h"
 #import <CoreLocation/CoreLocation.h>
+
+
 //variables
 static NSString * const segueDetails = @"RDetails";
 
@@ -29,6 +31,7 @@ static NSString * const segueDetails = @"RDetails";
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+        self.mapView.hidden = YES;
     // Do any additional setup after loading the view.
 
 }
@@ -58,11 +61,14 @@ static NSString * const segueDetails = @"RDetails";
     self.distL.hidden = YES;
     self.speedL.hidden = YES;
     self.stopBtn.hidden = YES;
+    self.mapView.hidden = YES;
+
     
     //show
     self.startBtn.hidden = NO;
     self.promptL.hidden = NO;
     self.prompt.hidden = NO;
+
 }
 
 //****************************************************************************************************
@@ -80,6 +86,8 @@ static NSString * const segueDetails = @"RDetails";
     self.distL.hidden = NO;
     self.speedL.hidden = NO;
     self.stopBtn.hidden = NO;
+    self.mapView.hidden = NO;
+
     
     //begin run; resets fields
     self.secs = 0;
@@ -143,7 +151,6 @@ static NSString * const segueDetails = @"RDetails";
     self.speedL.text = [NSString stringWithFormat:@"Speed: %@",  [PREConvert spdSg:self.dist period:self.secs]];
 }
 //***********************************************************************************************************************
-//
 //  Update the location
 //***********************************************************************************************************************
 - (void)updateLocation
@@ -173,11 +180,25 @@ static NSString * const segueDetails = @"RDetails";
      didUpdateLocations:(NSArray *)savedLoc
 {
     for (CLLocation *newLocation in savedLoc) {
-        if (newLocation.horizontalAccuracy < 20) {
+        //if (newLocation.horizontalAccuracy < 20) {
+            NSDate *eventDate = newLocation.timestamp;
+            NSTimeInterval howRecent = [eventDate timeIntervalSinceNow];
             
+            if (abs(howRecent) < 10.0 && newLocation.horizontalAccuracy < 20) {
+                
             // update distance
             if (self.savedLoc.count > 0) {
                 self.dist += [newLocation distanceFromLocation:self.savedLoc.lastObject];
+                CLLocationCoordinate2D coords[2];
+                coords[0] = ((CLLocation *)self.savedLoc.lastObject).coordinate;
+                coords[1] = newLocation.coordinate;
+                
+                MKCoordinateRegion region =
+                MKCoordinateRegionMakeWithDistance(newLocation.coordinate, 500, 500);
+                [self.mapView setRegion:region animated:YES];
+                
+                [self.mapView addOverlay:[MKPolyline polylineWithCoordinates:coords count:2]];
+                
             }
             
             [self.savedLoc addObject:newLocation];
@@ -222,4 +243,22 @@ static NSString * const segueDetails = @"RDetails";
         abort();
     }
 }
+//***********************************************************************************************************************
+//
+//***********************************************************************************************************************
+- (MKOverlayRenderer *)mapView:(MKMapView *)mapView rendererForOverlay:(id < MKOverlay >)overlay
+{
+    if ([overlay isKindOfClass:[MKPolyline class]]) {
+        MKPolyline *polyLine = (MKPolyline *)overlay;
+        MKPolylineRenderer *aRenderer = [[MKPolylineRenderer alloc] initWithPolyline:polyLine];
+        aRenderer.strokeColor = [UIColor blueColor];
+        aRenderer.lineWidth = 5;
+        return aRenderer;
+    }
+    return nil;
+}
+
+//***********************************************************************************************************************
+//
+//***********************************************************************************************************************
 @end

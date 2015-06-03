@@ -12,8 +12,9 @@
 #import "PREConvert.h"
 #import "Run.h"
 #import "Location.h"
+#import <MapKit/MapKit.h>
 
-@interface PRENewViewController : UIViewController <UIActionSheetDelegate, CLLocationManagerDelegate>
+@interface PRENewViewController : UIViewController <UIActionSheetDelegate, CLLocationManagerDelegate, MKMapViewDelegate>
 
 @property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 
@@ -36,6 +37,7 @@
 @property (nonatomic, strong) CLLocationManager *loc;
 @property (nonatomic, strong) NSMutableArray *savedLoc;
 @property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, weak) IBOutlet MKMapView *mapView;
 
 //button action
 -(IBAction)startAction:(id)sender;
