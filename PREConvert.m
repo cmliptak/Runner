@@ -41,14 +41,14 @@ float const msMiles = 1609.344;
     if (isLong){
         
         if (hrs > 0){
-            return [NSString stringWithFormat:@"%ihr %imin %isec", hrs, mins, secs];
+            return [NSString stringWithFormat:@"%i hr %i min %i sec", hrs, mins, secs];
         }
         else
             if (mins > 0){
-                return [NSString stringWithFormat:@"%imin %isec", mins, secs];
+                return [NSString stringWithFormat:@"%i min %i sec", mins, secs];
             }
             else{
-                return [NSString stringWithFormat:@"%isec", secs];
+                return [NSString stringWithFormat:@"%i sec", secs];
             }
     }//end if(isLong)
     else{
